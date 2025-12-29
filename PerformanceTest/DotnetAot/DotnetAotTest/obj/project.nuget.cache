@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "RHXcYdlg87Q=",
+  "success": true,
+  "projectFilePath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+  "expectedPackageFiles": [
+    "/home/kaustav/.nuget/packages/microsoft.aspnetcore.openapi/10.0.0/microsoft.aspnetcore.openapi.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.dotnet.ilcompiler/10.0.0/microsoft.dotnet.ilcompiler.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.net.illink.tasks/10.0.0/microsoft.net.illink.tasks.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/10.0.0/microsoft.netcore.app.runtime.linux-x64.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/10.0.0/microsoft.aspnetcore.app.runtime.linux-x64.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/microsoft.netcore.app.runtime.nativeaot.linux-x64/10.0.0/microsoft.netcore.app.runtime.nativeaot.linux-x64.10.0.0.nupkg.sha512",
+    "/home/kaustav/.nuget/packages/runtime.linux-x64.microsoft.dotnet.ilcompiler/10.0.0/runtime.linux-x64.microsoft.dotnet.ilcompiler.10.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

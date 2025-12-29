@@ -4,6 +4,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+// Set Kestrel to listen on port 5600
+app.Urls.Add("http://localhost:5500");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -48,21 +50,21 @@ app.MapGet("/heavy", async () =>
 
     // Offload to thread pool to allow checking multi-threaded performance
     var prime = await Task.Run(() => GetNthPrime(nth));
-    
+
     var end = DateTime.UtcNow;
     var durationMs = (end - start).TotalMilliseconds;
 
-    return new 
-    { 
-        Message = $"Found {nth}th prime number", 
-        Result = prime, 
+    return new
+    {
+        Message = $"Found {nth}th prime number",
+        Result = prime,
         DurationMs = durationMs,
-        Platform = ".NET" 
+        Platform = ".NET"
     };
 })
 .WithName("GetHeavyComputation");
 
- app.MapGet("/io", async () =>
+app.MapGet("/io", async () =>
 {
     // Simulate I/O delay
     await Task.Delay(100);

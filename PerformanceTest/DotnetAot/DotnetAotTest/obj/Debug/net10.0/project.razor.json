@@ -1,0 +1,19 @@
+{
+  "FilePath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+  "Configuration": {
+    "ConfigurationName": "MVC-3.0",
+    "LanguageVersion": "6.0",
+    "Extensions": [
+      {
+        "ExtensionName": "MVC-3.0"
+      }
+    ]
+  },
+  "ProjectWorkspaceState": {
+    "TagHelpers": [],
+    "CSharpLanguageVersion": 1000
+  },
+  "RootNamespace": "DotnetAotTest",
+  "Documents": [],
+  "SerializationFormat": "0.2"
+}

@@ -1,25 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj": {}
+    "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj": {}
   },
   "projects": {
-    "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj": {
+    "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj",
+        "projectUniqueName": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj",
         "projectName": "DotnetTest",
-        "projectPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj",
-        "packagesPath": "/Users/kaustavhalder/.nuget/packages/",
-        "outputPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/",
+        "projectPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/DotnetTest.csproj",
+        "packagesPath": "/home/kaustav/.nuget/packages/",
+        "outputPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/kaustavhalder/.nuget/NuGet/NuGet.Config"
+          "/home/kaustav/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "/usr/lib/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -68,7 +69,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

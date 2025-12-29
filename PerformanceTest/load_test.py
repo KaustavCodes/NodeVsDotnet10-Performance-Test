@@ -1,369 +1,236 @@
-import requests
-import threading
+import asyncio
+import aiohttp
 import time
-import json
-import statistics
-import sys
-import random
+import numpy as np
+from collections import defaultdict
+from tqdm import tqdm
 
-# Configuration
-NODE_BASE = "http://localhost:3000"
-DOTNET_BASE = "http://localhost:5500"
+# ================= CONFIG =================
 
-# CPU TEST CONFIG
-CPU_CONCURRENCY = 200
-CPU_REQUESTS = 25 
-EXPECTED_PRIME = 224737
-
-# I/O TEST CONFIG
-IO_CONCURRENCY = 1000
-IO_REQUESTS = 20
-
-# ATTACK TEST CONFIG
-ATTACK_CONCURRENCY = 2000
-ATTACK_REQUESTS = 50
-
-# BREAKING POINT CONFIG
-BREAKING_START = 2500
-BREAKING_STEP = 10000
-BREAKING_LIMIT = 50000
-BREAKING_REQUESTS = 5  # Quick burst to test stability
-
-results = {
-    "CPU": {
-        "Node.js": {"times": [], "errors": 0, "mismatches": 0},
-        "Dotnet": {"times": [], "errors": 0, "mismatches": 0}
-    },
-    "IO": {
-        "Node.js": {"times": [], "errors": 0},
-        "Dotnet": {"times": [], "errors": 0}
-    },
-    "Attack": {
-        "Node.js": {"times": [], "errors": 0},
-        "Dotnet": {"times": [], "errors": 0}
-    },
-    "Breaking": {
-        "Node.js": {"max_concurrency": 0},
-        "Dotnet": {"max_concurrency": 0}
-    }
-}
+NODE = "http://localhost:3000"
+DOTNET = "http://localhost:5500"
+GO = "http://localhost:8080"
+DOTNET_AOT = "http://localhost:5600"
 
 
-def cool_down(seconds=5):
-    print(f"\n❄️  Cooling down for {seconds} seconds...")
-    time.sleep(seconds)
-    print("🔥  Ready!\n")
+TEST_DURATION = 30      # seconds per test
+WARMUP_DURATION = 5
+TIMEOUT = aiohttp.ClientTimeout(total=30)
 
-def warm_up(url, platform):
-    print(f"\n☀️  Warming up {platform} ({url})...")
-    try:
-        # Simple sequential requests to wake up the server
-        for _ in range(10):
-            requests.get(url, timeout=5)
-    except Exception as e:
-        print(f"⚠️  Warmup warning for {platform}: {e}")
-    print("🔥  Warmup complete!\n")
+RESULTS = defaultdict(dict)
 
-def find_breaking_point(url, platform):
-    print(f"\n🔨  Finding BREAKING POINT for {platform} ({url})...")
-    current_concurrency = BREAKING_START
-    max_stable = 0
-    
-    while current_concurrency <= BREAKING_LIMIT:
-        print(f"   Testing Concurrency: {current_concurrency}...", end=" ", flush=True)
-        
-        # Reset errors for this batch
-        local_errors = 0
-        total_reqs = current_concurrency * BREAKING_REQUESTS
-        completed_count = 0
-        completed_lock = threading.Lock()
-        
-        def worker():
-            nonlocal local_errors, completed_count
-            session = requests.Session()
-            session.headers.update({"Connection": "keep-alive"})
-            
-            for _ in range(BREAKING_REQUESTS):
-                try:
-                    resp = session.get(url, timeout=5) # Tight timeout for stability check
-                    if resp.status_code != 200:
-                        with completed_lock:
-                            local_errors += 1
-                except:
-                    with completed_lock:
-                        local_errors += 1
-                
-                with completed_lock:
-                    completed_count += 1
-            session.close()
+# ================= UTIL =================
 
-        threads = []
-        for _ in range(current_concurrency):
-            t = threading.Thread(target=worker)
-            t.daemon = True
-            threads.append(t)
-            t.start()
-        
-        # Wait for batch
-        for t in threads:
-            t.join()
-            
-        print(f"Errors: {local_errors}/{total_reqs}")
-        
-        # Check logic: > 10 errors OR > 1% failure rate is considered "Broken"
-        if local_errors > 10:
-            print(f"❌  BROKEN at {current_concurrency} threads! (Stability threshold exceeded)")
-            break
-        else:
-            max_stable = current_concurrency
-            current_concurrency += BREAKING_STEP
-            time.sleep(1) # Small pause
-            
-    if current_concurrency > BREAKING_LIMIT:
-         print(f"✅  Survived up to {BREAKING_LIMIT} threads! Server is a tank.")
-         max_stable = BREAKING_LIMIT
-
-    results["Breaking"][platform]["max_concurrency"] = max_stable
-    print(f"🏆  Max Stable Concurrency for {platform}: {max_stable}\n")
-
-
-def run_load(url, platform, category, concurrency, requests_per_thread, check_prime=False, ramp_up_time=0, attack_mode=False):
-    total_requests = concurrency * requests_per_thread
-    print(f"[{category}] {platform}: Starting {concurrency} threads x {requests_per_thread} reqs ({total_requests} total)")
-    if ramp_up_time > 0 and not attack_mode:
-        print(f"   (Ramping up over {ramp_up_time}s)")
-    if attack_mode:
-        print(f"   (⚔️  ATTACK MODE: No Mercy! No Delays!)")
-    
-    threads = []
-    completed_lock = threading.Lock()
-    completed_count = 0
-    
-    def worker():
-        nonlocal completed_count
-        # Use a Session for connection pooling (Keep-Alive)
-        session = requests.Session()
-        # Mimic a browser
-        session.headers.update({
-            "User-Agent": "PerformanceTest/1.0",
-            "Connection": "keep-alive"
-        })
-        
-        for _ in range(requests_per_thread):
-            start = time.time()
+async def warmup(url):
+    print(f"☀️  Warming up {url}")
+    async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+        start = time.time()
+        while time.time() - start < WARMUP_DURATION:
             try:
-                resp = session.get(url, timeout=30)
-                if resp.status_code == 200:
-                    duration = time.time() - start
-                    results[category][platform]["times"].append(duration)
-                    
-                    if check_prime:
-                        data = resp.json()
-                        if data.get("result") != EXPECTED_PRIME:
-                            results[category][platform]["mismatches"] += 1
-                else:
-                    results[category][platform]["errors"] += 1
-            except Exception:
-                results[category][platform]["errors"] += 1
-            
-            with completed_lock:
-                completed_count += 1
-            
-            # Simulate "Think Time" (random pause between requests)
-            # ONLY if NOT in attack mode
-            if not attack_mode:
-                time.sleep(random.uniform(0.1, 0.5))
-        
-        session.close()
+                async with session.get(url) as r:
+                    await r.read()
+            except:
+                pass
+    print("🔥  Warmup complete\n")
 
-    # Start threads 
-    # Disable ramp-up if attack mode (Shock the system)
-    delay_per_thread = (ramp_up_time / concurrency) if (ramp_up_time > 0 and not attack_mode) else 0
-    
-    for _ in range(concurrency):
-        t = threading.Thread(target=worker)
-        t.daemon = True
-        threads.append(t)
-        t.start()
-        if delay_per_thread > 0:
-            time.sleep(delay_per_thread)
-    
-    # Monitor progress
-    while completed_count < total_requests:
-        time.sleep(0.1)
-        percent = (completed_count / total_requests) * 100
-        bar_length = 30
-        filled_length = int(bar_length * completed_count // total_requests)
-        bar = '█' * filled_length + '-' * (bar_length - filled_length)
-        sys.stdout.write(f'\r[{category}] {platform} |{bar}| {percent:.1f}% ({completed_count}/{total_requests})')
-        sys.stdout.flush()
-        
-        # Check if all threads died unexpectedly (simple check)
-        if not any(t.is_alive() for t in threads) and completed_count < total_requests:
-            break
+async def cool_down(seconds=10):
+    print(f"\n❄️  Cooling down for {seconds} seconds...")
+    for i in range(seconds, 0, -1):
+        print(f"   Resuming in {i}s", end="\r")
+        await asyncio.sleep(1)
+    print("\n🔥  Ready for next round!\n")
 
-    # Final join
-    for t in threads:
-        t.join()
-    
-    # Final print to clear line
-    sys.stdout.write(f'\r[{category}] {platform} |{"█"*30}| 100.0% ({total_requests}/{total_requests}) ✅\n')
-    sys.stdout.flush()
+async def run_test(label, runtime, url, concurrency):
+    latencies = []
+    errors = 0
+    completed = 0
 
-def generate_html_report():
-    def get_avg(cat, plat):
-        data = results[cat][plat]["times"]
-        return statistics.mean(data) if data else 0
+    semaphore = asyncio.Semaphore(concurrency)
 
-    def get_errors(cat, plat):
-        return results[cat][plat]["errors"]
+    async def worker(session):
+        nonlocal errors, completed
+        async with semaphore:
+            start = time.perf_counter()
+            try:
+                async with session.get(url) as resp:
+                    await resp.read()  # IMPORTANT
+                    if resp.status == 200:
+                        latencies.append(time.perf_counter() - start)
+                    else:
+                        errors += 1
+            except:
+                errors += 1
+            completed += 1
 
-    cpu_node = get_avg("CPU", "Node.js")
-    cpu_dotnet = get_avg("CPU", "Dotnet")
-    io_node = get_avg("IO", "Node.js")
-    io_dotnet = get_avg("IO", "Dotnet")
-    attack_node = get_avg("Attack", "Node.js")
-    attack_dotnet = get_avg("Attack", "Dotnet")
+    print(f"[{label}] {runtime} → {concurrency} concurrent users")
 
-    attack_err_node = get_errors("Attack", "Node.js")
-    attack_err_dotnet = get_errors("Attack", "Dotnet")
+    async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+        start_time = time.time()
+        with tqdm(desc=f"{label} | {runtime}", unit="req") as bar:
+            while time.time() - start_time < TEST_DURATION:
+                await asyncio.gather(
+                    *[worker(session) for _ in range(concurrency)]
+                )
+                bar.update(completed - bar.n)
 
-    break_node = results["Breaking"]["Node.js"]["max_concurrency"]
-    break_dotnet = results["Breaking"]["Dotnet"]["max_concurrency"]
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Node.js vs .NET: The Ultimate Battle</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <style>
-            body {{ font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: #f0f2f5; }}
-            .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }}
-            h1 {{ text-align: center; color: #1a1a1a; margin-bottom: 30px; }}
-            .grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }}
-            .chart-card {{ padding: 20px; border-radius: 8px; background: #fff; border: 1px solid #e1e4e8; }}
-            h2 {{ text-align: center; font-size: 1.2rem; color: #444; }}
-            .stats {{ margin-top: 10px; font-size: 0.9rem; color: #666; text-align: center; }}
-            .error-stats {{ color: #dc3545; font-weight: bold; font-size: 0.8rem; margin-top: 5px; text-align: center; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Performance Showdown</h1>
-            
-            <div class="grid">
-                <div class="chart-card">
-                    <h2>Round 1: CPU Heavy (Prime Calc)</h2>
-                    <canvas id="cpuChart"></canvas>
-                    <div class="stats">
-                        Node: {cpu_node:.4f}s | .NET: {cpu_dotnet:.4f}s
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h2>Round 2: I/O Bound (Simulated Wait)</h2>
-                    <canvas id="ioChart"></canvas>
-                    <div class="stats">
-                        Node: {io_node:.4f}s | .NET: {io_dotnet:.4f}s
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h2>Round 3: Stick Mode (Stress)</h2>
-                    <canvas id="attackChart"></canvas>
-                    <div class="stats">
-                        Node: {attack_node:.4f}s | .NET: {attack_dotnet:.4f}s
-                    </div>
-                    <div class="error-stats">
-                        Failures: Node {attack_err_node} | .NET {attack_err_dotnet}
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h2>Round 4: Breaking Point (Max Users)</h2>
-                    <canvas id="breakChart"></canvas>
-                    <div class="stats">
-                        Node: {break_node} users | .NET: {break_dotnet} users
-                    </div>
-                </div>
+    return latencies, errors
+
+def summarize(latencies, errors):
+    if not latencies:
+        return {
+            "avg": None,
+            "p95": None,
+            "p99": None,
+            "errors": errors,
+            "count": 0
+        }
+
+    arr = np.array(latencies)
+    return {
+        "avg": float(arr.mean()),
+        "p95": float(np.percentile(arr, 95)),
+        "p99": float(np.percentile(arr, 99)),
+        "errors": errors,
+        "count": len(arr)
+    }
+
+def fmt(val):
+    return f"{val:.4f}" if isinstance(val, float) else "N/A"
+
+# ================= TEST ROUNDS =================
+
+async def baseline_test():
+    print("\n--- ROUND 0: BASELINE (IO, SINGLE USER) ---")
+    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+        url = f"{base}/io"
+        await warmup(url)
+        lat, err = await run_test("Baseline", name, url, concurrency=1)
+        RESULTS["Baseline"][name] = summarize(lat, err)
+
+async def io_test():
+    print("\n--- ROUND 1: IO-BOUND (ASYNC SCALABILITY) ---")
+    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+        url = f"{base}/io"
+        await warmup(url)
+        lat, err = await run_test("IO", name, url, concurrency=200)
+        RESULTS["IO"][name] = summarize(lat, err)
+
+async def cpu_test():
+    print("\n--- ROUND 2: CPU-BOUND (PRIME CALCULATION) ---")
+    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+        url = f"{base}/heavy"
+        await warmup(url)
+        lat, err = await run_test("CPU", name, url, concurrency=4)
+        RESULTS["CPU"][name] = summarize(lat, err)
+
+async def sustained_test():
+    print("\n--- ROUND 3: SUSTAINED LOAD (TAIL LATENCY) ---")
+    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+        url = f"{base}/io"
+        await warmup(url)
+        lat, err = await run_test("Sustained", name, url, concurrency=300)
+        RESULTS["Sustained"][name] = summarize(lat, err)
+
+# ================= HTML REPORT =================
+
+def generate_html():
+    def block(test):
+        n = RESULTS[test]["Node.js"]
+        d = RESULTS[test]["Dotnet"]
+        g = RESULTS[test]["Go"]
+        d_aot = RESULTS[test]["Dotnet AOT"]
+        return f"""
+        <div class="card">
+            <h2>{test}</h2>
+            <canvas id="{test}Chart"></canvas>
+            <div class="stats">
+                Avg: Node {fmt(n['avg'])}s | .NET {fmt(d['avg'])}s | Go {fmt(g['avg'])}s | .NET AOT {fmt(d_aot['avg'])}s<br/>
+                P95: Node {fmt(n['p95'])}s | .NET {fmt(d['p95'])}s | Go {fmt(g['p95'])}s | .NET AOT {fmt(d_aot['p95'])}s<br/>
+                P99: Node {fmt(n['p99'])}s | .NET {fmt(d['p99'])}s | Go {fmt(g['p99'])}s | .NET AOT {fmt(d_aot['p99'])}s<br/>
+                Errors: Node {n['errors']} | .NET {d['errors']} | Go {g['errors']} | .NET AOT {d_aot['errors']}<br/>
+                Samples: Node {n['count']} | .NET {d['count']} | Go {g['count']} | .NET AOT {d_aot['count']}
             </div>
         </div>
-        <script>
-            const createChart = (ctx, label, nodeVal, netVal) => {{
-                new Chart(ctx, {{
-                    type: 'bar',
-                    data: {{
-                        labels: ['Node.js', '.NET'],
-                        datasets: [{{
-                            label: label,
-                            data: [nodeVal, netVal],
-                            backgroundColor: ['#68a063', '#512bd4']
-                        }}]
-                    }},
-                    options: {{
-                        responsive: true,
-                        plugins: {{ legend: {{ display: false }} }},
-                        scales: {{ y: {{ beginAtZero: true }} }}
-                    }}
-                }});
-            }};
+        """
 
-            createChart(document.getElementById('cpuChart'), 'Avg Response (s)', {cpu_node}, {cpu_dotnet});
-            createChart(document.getElementById('ioChart'), 'Avg Response (s)', {io_node}, {io_dotnet});
-            createChart(document.getElementById('attackChart'), 'Avg Response (s)', {attack_node}, {attack_dotnet});
-            createChart(document.getElementById('breakChart'), 'Max Concurrent Users', {break_node}, {break_dotnet});
-        </script>
-    </body>
-    </html>
-    """
-    
+    def chart(test):
+        n = RESULTS[test]["Node.js"]["avg"] or 0
+        d = RESULTS[test]["Dotnet"]["avg"] or 0
+        g = RESULTS[test]["Go"]["avg"] or 0
+        d_aot = RESULTS[test]["Dotnet AOT"]["avg"] or 0
+        return f"""
+        new Chart(document.getElementById('{test}Chart'), {{
+            type: 'bar',
+            data: {{
+                labels: ['Node.js', '.NET', 'Go', '.NET AOT'],
+                datasets: [{{
+                    label: 'Avg Response (s)',
+                    data: [{n}, {d}, {g}, {d_aot}],
+                    backgroundColor: ['#68a063', '#512bd4', '#00ADD8', '#FF0000']
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                plugins: {{ legend: {{ display: false }} }},
+                scales: {{ y: {{ beginAtZero: true }} }}
+            }}
+        }});
+        """
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<title>Node.js vs .NET vs Go – Performance Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {{ font-family: system-ui; background:#f4f6f8; padding:30px }}
+.container {{ max-width:1200px; margin:auto; background:#fff; padding:30px; border-radius:12px }}
+.grid {{ display:grid; grid-template-columns:1fr 1fr; gap:30px }}
+.card {{ padding:20px; border:1px solid #ddd; border-radius:10px }}
+.stats {{ text-align:center; color:#555; margin-top:10px }}
+h1 {{ text-align:center }}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Node.js vs .NET vs Go – Realistic Performance Tests</h1>
+<div class="grid">
+{''.join(block(t) for t in RESULTS)}
+</div>
+</div>
+<script>
+{''.join(chart(t) for t in RESULTS)}
+</script>
+</body>
+</html>
+"""
+
     with open("results.html", "w") as f:
-        f.write(html_content)
-    print("Results generated: results.html")
+        f.write(html)
+
+# ================= MAIN =================
+
+async def main():
+    await baseline_test()
+    await cool_down(5)
+
+    await io_test()
+    await cool_down(10)
+
+    await cpu_test()
+    await cool_down(10)
+
+    await sustained_test()
+
+    print("\n===== FINAL SUMMARY =====")
+    for test, data in RESULTS.items():
+        print(f"\n{test}")
+        for runtime, stats in data.items():
+            print(f"  {runtime}: {stats}")
+
+    generate_html()
+    print("\n📄 HTML report generated → results.html")
 
 if __name__ == "__main__":
-    # CPU Round
-    print("--- ROUND 1: CPU HEAVY BOUND ---")
-    warm_up(f"{NODE_BASE}/heavy", "Node.js")
-    run_load(f"{NODE_BASE}/heavy", "Node.js", "CPU", CPU_CONCURRENCY, CPU_REQUESTS, True)
-    
-    cool_down(3)
-    
-    warm_up(f"{DOTNET_BASE}/heavy", "Dotnet")
-    run_load(f"{DOTNET_BASE}/heavy", "Dotnet", "CPU", CPU_CONCURRENCY, CPU_REQUESTS, True)
-
-    cool_down(10) # Longer cooldown before the massive connection storm
-
-    # I/O Round with Ramp-up
-    print("--- ROUND 2: I/O BOUND (HIGH CONCURRENCY) ---")
-    
-    warm_up(f"{NODE_BASE}/io", "Node.js")
-    # Using 5s ramp-up for 1000 users = 200 users/sec
-    run_load(f"{NODE_BASE}/io", "Node.js", "IO", IO_CONCURRENCY, IO_REQUESTS, ramp_up_time=5)
-    
-    cool_down()
-    
-    warm_up(f"{DOTNET_BASE}/io", "Dotnet")
-    run_load(f"{DOTNET_BASE}/io", "Dotnet", "IO", IO_CONCURRENCY, IO_REQUESTS, ramp_up_time=5)
-    
-    cool_down(10)
-
-    # Attack Round
-    print("--- ROUND 3: ATTACK MODE (NO MERCY) ---")
-    
-    warm_up(f"{NODE_BASE}/io", "Node.js")
-    run_load(f"{NODE_BASE}/io", "Node.js", "Attack", ATTACK_CONCURRENCY, ATTACK_REQUESTS, attack_mode=True)
-    
-    cool_down()
-    
-    warm_up(f"{DOTNET_BASE}/io", "Dotnet")
-    run_load(f"{DOTNET_BASE}/io", "Dotnet", "Attack", ATTACK_CONCURRENCY, ATTACK_REQUESTS, attack_mode=True)
-
-    cool_down(10)
-
-    # Breaking Point Round
-    print("--- ROUND 4: BREAKING POINT (STABILITY) ---")
-    
-    find_breaking_point(f"{NODE_BASE}/io", "Node.js")
-    cool_down()
-    find_breaking_point(f"{DOTNET_BASE}/io", "Dotnet")
-
-    generate_html_report()
+    asyncio.run(main())
