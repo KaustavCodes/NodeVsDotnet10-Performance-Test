@@ -24,24 +24,31 @@
                     <h2>Round 1: CPU Heavy (Prime Calc)</h2>
                     <canvas id="cpuChart"></canvas>
                     <div class="stats">
-                        Node: 0.8400s | .NET: 0.5664s
+                        Node: 0.8476s | .NET: 0.5684s
                     </div>
                 </div>
                 <div class="chart-card">
                     <h2>Round 2: I/O Bound (Simulated Wait)</h2>
                     <canvas id="ioChart"></canvas>
                     <div class="stats">
-                        Node: 0.1184s | .NET: 0.1232s
+                        Node: 0.1197s | .NET: 0.1201s
                     </div>
                 </div>
-                <div class="chart-card" style="grid-column: span 2;">
-                    <h2>Round 3: ATTACK MODE (Stress Test)</h2>
+                <div class="chart-card">
+                    <h2>Round 3: Stick Mode (Stress)</h2>
                     <canvas id="attackChart"></canvas>
                     <div class="stats">
-                        Node: 0.1842s | .NET: 0.1886s
+                        Node: 0.1846s | .NET: 0.1850s
                     </div>
                     <div class="error-stats">
-                        Failed Reqs -> Node: 0 | .NET: 0
+                        Failures: Node 0 | .NET 0
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h2>Round 4: Breaking Point (Max Users)</h2>
+                    <canvas id="breakChart"></canvas>
+                    <div class="stats">
+                        Node: 10000 users | .NET: 10000 users
                     </div>
                 </div>
             </div>
@@ -53,7 +60,7 @@
                     data: {
                         labels: ['Node.js', '.NET'],
                         datasets: [{
-                            label: 'Avg Response (s)',
+                            label: label,
                             data: [nodeVal, netVal],
                             backgroundColor: ['#68a063', '#512bd4']
                         }]
@@ -61,14 +68,15 @@
                     options: {
                         responsive: true,
                         plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, title: { display: true, text: 'Seconds (Lower is Better)' } } }
+                        scales: { y: { beginAtZero: true } }
                     }
                 });
             };
 
-            createChart(document.getElementById('cpuChart'), 'CPU', 0.8399996106441204, 0.566377929353714);
-            createChart(document.getElementById('ioChart'), 'I/O', 0.1183928759932518, 0.12316130809783936);
-            createChart(document.getElementById('attackChart'), 'Attack', 0.1842388671875, 0.1886018856072426);
+            createChart(document.getElementById('cpuChart'), 'Avg Response (s)', 0.8475676689587929, 0.5683921409130096);
+            createChart(document.getElementById('ioChart'), 'Avg Response (s)', 0.11972274931669236, 0.12010605864524841);
+            createChart(document.getElementById('attackChart'), 'Avg Response (s)', 0.18459610483407973, 0.1849986975312233);
+            createChart(document.getElementById('breakChart'), 'Max Concurrent Users', 10000, 10000);
         </script>
     </body>
     </html>
