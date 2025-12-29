@@ -24,21 +24,21 @@
                     <h2>Round 1: CPU Heavy (Prime Calc)</h2>
                     <canvas id="cpuChart"></canvas>
                     <div class="stats">
-                        Node: 0.8290s | .NET: 0.5668s
+                        Node: 0.8400s | .NET: 0.5664s
                     </div>
                 </div>
                 <div class="chart-card">
                     <h2>Round 2: I/O Bound (Simulated Wait)</h2>
                     <canvas id="ioChart"></canvas>
                     <div class="stats">
-                        Node: 0.1212s | .NET: 0.1195s
+                        Node: 0.1184s | .NET: 0.1232s
                     </div>
                 </div>
                 <div class="chart-card" style="grid-column: span 2;">
                     <h2>Round 3: ATTACK MODE (Stress Test)</h2>
                     <canvas id="attackChart"></canvas>
                     <div class="stats">
-                        Node: 0.1888s | .NET: 0.1903s
+                        Node: 0.1842s | .NET: 0.1886s
                     </div>
                     <div class="error-stats">
                         Failed Reqs -> Node: 0 | .NET: 0
@@ -66,9 +66,9 @@
                 });
             };
 
-            createChart(document.getElementById('cpuChart'), 'CPU', 0.8289947067498677, 0.5668350129604339);
-            createChart(document.getElementById('ioChart'), 'I/O', 0.12115780892372131, 0.11945748616456986);
-            createChart(document.getElementById('attackChart'), 'Attack', 0.18881639932632446, 0.1902908637022972);
+            createChart(document.getElementById('cpuChart'), 'CPU', 0.8399996106441204, 0.566377929353714);
+            createChart(document.getElementById('ioChart'), 'I/O', 0.1183928759932518, 0.12316130809783936);
+            createChart(document.getElementById('attackChart'), 'Attack', 0.1842388671875, 0.1886018856072426);
         </script>
     </body>
     </html>

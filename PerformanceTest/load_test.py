@@ -23,6 +23,12 @@ IO_REQUESTS = 20
 ATTACK_CONCURRENCY = 2000
 ATTACK_REQUESTS = 50
 
+# BREAKING POINT CONFIG
+BREAKING_START = 1000
+BREAKING_STEP = 1000
+BREAKING_LIMIT = 10000
+BREAKING_REQUESTS = 5  # Quick burst to test stability
+
 results = {
     "CPU": {
         "Node.js": {"times": [], "errors": 0, "mismatches": 0},
@@ -35,6 +41,10 @@ results = {
     "Attack": {
         "Node.js": {"times": [], "errors": 0},
         "Dotnet": {"times": [], "errors": 0}
+    },
+    "Breaking": {
+        "Node.js": {"max_concurrency": 0},
+        "Dotnet": {"max_concurrency": 0}
     }
 }
 
@@ -53,6 +63,69 @@ def warm_up(url, platform):
     except Exception as e:
         print(f"⚠️  Warmup warning for {platform}: {e}")
     print("🔥  Warmup complete!\n")
+
+def find_breaking_point(url, platform):
+    print(f"\n🔨  Finding BREAKING POINT for {platform} ({url})...")
+    current_concurrency = BREAKING_START
+    max_stable = 0
+    
+    while current_concurrency <= BREAKING_LIMIT:
+        print(f"   Testing Concurrency: {current_concurrency}...", end=" ", flush=True)
+        
+        # Reset errors for this batch
+        local_errors = 0
+        total_reqs = current_concurrency * BREAKING_REQUESTS
+        completed_count = 0
+        completed_lock = threading.Lock()
+        
+        def worker():
+            nonlocal local_errors, completed_count
+            session = requests.Session()
+            session.headers.update({"Connection": "keep-alive"})
+            
+            for _ in range(BREAKING_REQUESTS):
+                try:
+                    resp = session.get(url, timeout=5) # Tight timeout for stability check
+                    if resp.status_code != 200:
+                        with completed_lock:
+                            local_errors += 1
+                except:
+                    with completed_lock:
+                        local_errors += 1
+                
+                with completed_lock:
+                    completed_count += 1
+            session.close()
+
+        threads = []
+        for _ in range(current_concurrency):
+            t = threading.Thread(target=worker)
+            t.daemon = True
+            threads.append(t)
+            t.start()
+        
+        # Wait for batch
+        for t in threads:
+            t.join()
+            
+        print(f"Errors: {local_errors}/{total_reqs}")
+        
+        # Check logic: > 10 errors OR > 1% failure rate is considered "Broken"
+        if local_errors > 10:
+            print(f"❌  BROKEN at {current_concurrency} threads! (Stability threshold exceeded)")
+            break
+        else:
+            max_stable = current_concurrency
+            current_concurrency += BREAKING_STEP
+            time.sleep(1) # Small pause
+            
+    if current_concurrency > BREAKING_LIMIT:
+         print(f"✅  Survived up to {BREAKING_LIMIT} threads! Server is a tank.")
+         max_stable = BREAKING_LIMIT
+
+    results["Breaking"][platform]["max_concurrency"] = max_stable
+    print(f"🏆  Max Stable Concurrency for {platform}: {max_stable}\n")
+
 
 def run_load(url, platform, category, concurrency, requests_per_thread, check_prime=False, ramp_up_time=0, attack_mode=False):
     total_requests = concurrency * requests_per_thread
@@ -154,6 +227,9 @@ def generate_html_report():
 
     attack_err_node = get_errors("Attack", "Node.js")
     attack_err_dotnet = get_errors("Attack", "Dotnet")
+
+    break_node = results["Breaking"]["Node.js"]["max_concurrency"]
+    break_dotnet = results["Breaking"]["Dotnet"]["max_concurrency"]
     
     html_content = f"""
     <!DOCTYPE html>
@@ -191,14 +267,21 @@ def generate_html_report():
                         Node: {io_node:.4f}s | .NET: {io_dotnet:.4f}s
                     </div>
                 </div>
-                <div class="chart-card" style="grid-column: span 2;">
-                    <h2>Round 3: ATTACK MODE (Stress Test)</h2>
+                <div class="chart-card">
+                    <h2>Round 3: Stick Mode (Stress)</h2>
                     <canvas id="attackChart"></canvas>
                     <div class="stats">
                         Node: {attack_node:.4f}s | .NET: {attack_dotnet:.4f}s
                     </div>
                     <div class="error-stats">
-                        Failed Reqs -> Node: {attack_err_node} | .NET: {attack_err_dotnet}
+                        Failures: Node {attack_err_node} | .NET {attack_err_dotnet}
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h2>Round 4: Breaking Point (Max Users)</h2>
+                    <canvas id="breakChart"></canvas>
+                    <div class="stats">
+                        Node: {break_node} users | .NET: {break_dotnet} users
                     </div>
                 </div>
             </div>
@@ -210,7 +293,7 @@ def generate_html_report():
                     data: {{
                         labels: ['Node.js', '.NET'],
                         datasets: [{{
-                            label: 'Avg Response (s)',
+                            label: label,
                             data: [nodeVal, netVal],
                             backgroundColor: ['#68a063', '#512bd4']
                         }}]
@@ -218,14 +301,15 @@ def generate_html_report():
                     options: {{
                         responsive: true,
                         plugins: {{ legend: {{ display: false }} }},
-                        scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'Seconds (Lower is Better)' }} }} }}
+                        scales: {{ y: {{ beginAtZero: true }} }}
                     }}
                 }});
             }};
 
-            createChart(document.getElementById('cpuChart'), 'CPU', {cpu_node}, {cpu_dotnet});
-            createChart(document.getElementById('ioChart'), 'I/O', {io_node}, {io_dotnet});
-            createChart(document.getElementById('attackChart'), 'Attack', {attack_node}, {attack_dotnet});
+            createChart(document.getElementById('cpuChart'), 'Avg Response (s)', {cpu_node}, {cpu_dotnet});
+            createChart(document.getElementById('ioChart'), 'Avg Response (s)', {io_node}, {io_dotnet});
+            createChart(document.getElementById('attackChart'), 'Avg Response (s)', {attack_node}, {attack_dotnet});
+            createChart(document.getElementById('breakChart'), 'Max Concurrent Users', {break_node}, {break_dotnet});
         </script>
     </body>
     </html>
@@ -272,5 +356,14 @@ if __name__ == "__main__":
     
     warm_up(f"{DOTNET_BASE}/io", "Dotnet")
     run_load(f"{DOTNET_BASE}/io", "Dotnet", "Attack", ATTACK_CONCURRENCY, ATTACK_REQUESTS, attack_mode=True)
+
+    cool_down(10)
+
+    # Breaking Point Round
+    print("--- ROUND 4: BREAKING POINT (STABILITY) ---")
+    
+    find_breaking_point(f"{NODE_BASE}/io", "Node.js")
+    cool_down()
+    find_breaking_point(f"{DOTNET_BASE}/io", "Dotnet")
 
     generate_html_report()

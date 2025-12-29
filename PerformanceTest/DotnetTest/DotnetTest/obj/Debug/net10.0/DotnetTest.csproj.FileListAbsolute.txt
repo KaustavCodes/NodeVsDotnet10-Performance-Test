@@ -64,3 +64,4 @@
 /Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/Debug/net10.0/DotnetTest.pdb
 /Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/Debug/net10.0/DotnetTest.genruntimeconfig.cache
 /Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/Debug/net10.0/ref/DotnetTest.dll
+/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetTest/DotnetTest/obj/Debug/net10.0/DotnetTest.sourcelink.json
