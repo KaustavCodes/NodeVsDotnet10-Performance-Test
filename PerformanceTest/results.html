@@ -1,0 +1,75 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Node.js vs .NET: The Ultimate Battle</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: #f0f2f5; }
+            .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+            h1 { text-align: center; color: #1a1a1a; margin-bottom: 30px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+            .chart-card { padding: 20px; border-radius: 8px; background: #fff; border: 1px solid #e1e4e8; }
+            h2 { text-align: center; font-size: 1.2rem; color: #444; }
+            .stats { margin-top: 10px; font-size: 0.9rem; color: #666; text-align: center; }
+            .error-stats { color: #dc3545; font-weight: bold; font-size: 0.8rem; margin-top: 5px; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Performance Showdown</h1>
+            
+            <div class="grid">
+                <div class="chart-card">
+                    <h2>Round 1: CPU Heavy (Prime Calc)</h2>
+                    <canvas id="cpuChart"></canvas>
+                    <div class="stats">
+                        Node: 0.8290s | .NET: 0.5668s
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h2>Round 2: I/O Bound (Simulated Wait)</h2>
+                    <canvas id="ioChart"></canvas>
+                    <div class="stats">
+                        Node: 0.1212s | .NET: 0.1195s
+                    </div>
+                </div>
+                <div class="chart-card" style="grid-column: span 2;">
+                    <h2>Round 3: ATTACK MODE (Stress Test)</h2>
+                    <canvas id="attackChart"></canvas>
+                    <div class="stats">
+                        Node: 0.1888s | .NET: 0.1903s
+                    </div>
+                    <div class="error-stats">
+                        Failed Reqs -> Node: 0 | .NET: 0
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            const createChart = (ctx, label, nodeVal, netVal) => {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Node.js', '.NET'],
+                        datasets: [{
+                            label: 'Avg Response (s)',
+                            data: [nodeVal, netVal],
+                            backgroundColor: ['#68a063', '#512bd4']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, title: { display: true, text: 'Seconds (Lower is Better)' } } }
+                    }
+                });
+            };
+
+            createChart(document.getElementById('cpuChart'), 'CPU', 0.8289947067498677, 0.5668350129604339);
+            createChart(document.getElementById('ioChart'), 'I/O', 0.12115780892372131, 0.11945748616456986);
+            createChart(document.getElementById('attackChart'), 'Attack', 0.18881639932632446, 0.1902908637022972);
+        </script>
+    </body>
+    </html>
+    
