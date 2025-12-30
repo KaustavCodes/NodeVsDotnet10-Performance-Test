@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj": {}
+    "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj": {}
   },
   "projects": {
-    "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj": {
+    "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+        "projectUniqueName": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
         "projectName": "DotnetAotTest",
-        "projectPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
-        "packagesPath": "/home/kaustav/.nuget/packages/",
-        "outputPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/obj/",
+        "projectPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+        "packagesPath": "/Users/kaustavhalder/.nuget/packages/",
+        "outputPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/kaustav/.nuget/NuGet/NuGet.Config"
+          "/Users/kaustavhalder/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "/usr/lib/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -52,13 +51,13 @@
             "Microsoft.DotNet.ILCompiler": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.0, )",
+              "version": "[10.0.1, )",
               "autoReferenced": true
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.0, )",
+              "version": "[10.0.1, )",
               "autoReferenced": true
             }
           },
@@ -75,20 +74,8 @@
           "warn": true,
           "downloadDependencies": [
             {
-              "name": "Microsoft.AspNetCore.App.Runtime.linux-x64",
-              "version": "[10.0.0, 10.0.0]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.linux-x64",
-              "version": "[10.0.0, 10.0.0]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.NativeAOT.linux-x64",
-              "version": "[10.0.0, 10.0.0]"
-            },
-            {
-              "name": "runtime.linux-x64.Microsoft.DotNet.ILCompiler",
-              "version": "[10.0.0, 10.0.0]"
+              "name": "runtime.osx-arm64.Microsoft.DotNet.ILCompiler",
+              "version": "[10.0.1, 10.0.1]"
             }
           ],
           "frameworkReferences": {
@@ -99,7 +86,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -514,11 +501,6 @@
             "System.Xml.XPath": "(,4.3.32767]",
             "System.Xml.XPath.XDocument": "(,5.0.32767]"
           }
-        }
-      },
-      "runtimes": {
-        "linux-x64": {
-          "#import": []
         }
       }
     }

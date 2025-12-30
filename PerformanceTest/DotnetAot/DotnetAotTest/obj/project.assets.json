@@ -24,62 +24,13 @@
           "build/Microsoft.AspNetCore.OpenApi.targets": {}
         }
       },
-      "Microsoft.DotNet.ILCompiler/10.0.0": {
+      "Microsoft.DotNet.ILCompiler/10.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.DotNet.ILCompiler.props": {}
         }
       },
-      "Microsoft.NET.ILLink.Tasks/10.0.0": {
-        "type": "package",
-        "build": {
-          "build/Microsoft.NET.ILLink.Tasks.props": {}
-        }
-      },
-      "Microsoft.OpenApi/2.0.0": {
-        "type": "package",
-        "compile": {
-          "lib/net8.0/Microsoft.OpenApi.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net8.0/Microsoft.OpenApi.dll": {
-            "related": ".pdb;.xml"
-          }
-        }
-      }
-    },
-    "net10.0/linux-x64": {
-      "Microsoft.AspNetCore.OpenApi/10.0.0": {
-        "type": "package",
-        "dependencies": {
-          "Microsoft.OpenApi": "2.0.0"
-        },
-        "compile": {
-          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
-            "related": ".xml"
-          }
-        },
-        "frameworkReferences": [
-          "Microsoft.AspNetCore.App"
-        ],
-        "build": {
-          "build/Microsoft.AspNetCore.OpenApi.targets": {}
-        }
-      },
-      "Microsoft.DotNet.ILCompiler/10.0.0": {
-        "type": "package",
-        "build": {
-          "build/Microsoft.DotNet.ILCompiler.props": {}
-        }
-      },
-      "Microsoft.NET.ILLink.Tasks/10.0.0": {
+      "Microsoft.NET.ILLink.Tasks/10.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.ILLink.Tasks.props": {}
@@ -119,13 +70,14 @@
         "microsoft.aspnetcore.openapi.nuspec"
       ]
     },
-    "Microsoft.DotNet.ILCompiler/10.0.0": {
-      "sha512": "vk7IQ2VOucf2JVjcR0Du8DYSJ8eUwqCUIgiTaiJbvTBnfddt00wJlFKc7pvEqDdgE9nLs0slCZPnJNJ8sQMVNQ==",
+    "Microsoft.DotNet.ILCompiler/10.0.1": {
+      "sha512": "339VHcUMA2iDrkLGaqjSwn25S9lmus/+Iqg5Hz2LDPhsX5a5GbdQZ2f/f6HMz/uGGWtUGpsusqUvW5L3fx36VA==",
       "type": "package",
-      "path": "microsoft.dotnet.ilcompiler/10.0.0",
+      "path": "microsoft.dotnet.ilcompiler/10.0.1",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "Icon.png",
         "THIRD-PARTY-NOTICES.TXT",
         "build/BuildFrameworkNativeObjects.proj",
@@ -139,19 +91,21 @@
         "build/NativeAOT.natvis",
         "build/WindowsAPIs.txt",
         "build/findvcvarsall.bat",
-        "microsoft.dotnet.ilcompiler.10.0.0.nupkg.sha512",
+        "microsoft.dotnet.ilcompiler.10.0.1.nupkg.sha512",
         "microsoft.dotnet.ilcompiler.nuspec",
+        "runtime.json",
         "tools/netstandard/ILCompiler.Build.Tasks.deps.json",
         "tools/netstandard/ILCompiler.Build.Tasks.dll"
       ]
     },
-    "Microsoft.NET.ILLink.Tasks/10.0.0": {
-      "sha512": "q7Zx6WH76cTJ37l8KNL84bfhd+Xabe5sgShMOVhpysKQHc8LTubTbcZxt3nDJzf1X3KyagxWzPeMbg/lppTZrw==",
+    "Microsoft.NET.ILLink.Tasks/10.0.1": {
+      "sha512": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ==",
       "type": "package",
-      "path": "microsoft.net.illink.tasks/10.0.0",
+      "path": "microsoft.net.illink.tasks/10.0.1",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
+        ".signature.p7s",
         "Icon.png",
         "Sdk/Sdk.props",
         "THIRD-PARTY-NOTICES.TXT",
@@ -160,7 +114,7 @@
         "build/Microsoft.NET.ILLink.Analyzers.props",
         "build/Microsoft.NET.ILLink.Tasks.props",
         "build/Microsoft.NET.ILLink.targets",
-        "microsoft.net.illink.tasks.10.0.0.nupkg.sha512",
+        "microsoft.net.illink.tasks.10.0.1.nupkg.sha512",
         "microsoft.net.illink.tasks.nuspec",
         "tools/net/ILLink.Tasks.deps.json",
         "tools/net/ILLink.Tasks.dll",
@@ -175,6 +129,22 @@
         "tools/net/illink.deps.json",
         "tools/net/illink.dll",
         "tools/net/illink.runtimeconfig.json",
+        "tools/netframework/ILLink.Tasks.dll",
+        "tools/netframework/ILLink.Tasks.dll.config",
+        "tools/netframework/Mono.Cecil.Mdb.dll",
+        "tools/netframework/Mono.Cecil.Pdb.dll",
+        "tools/netframework/Mono.Cecil.Rocks.dll",
+        "tools/netframework/Mono.Cecil.dll",
+        "tools/netframework/Sdk/Sdk.props",
+        "tools/netframework/System.Buffers.dll",
+        "tools/netframework/System.Collections.Immutable.dll",
+        "tools/netframework/System.Memory.dll",
+        "tools/netframework/System.Numerics.Vectors.dll",
+        "tools/netframework/System.Reflection.Metadata.dll",
+        "tools/netframework/System.Runtime.CompilerServices.Unsafe.dll",
+        "tools/netframework/build/Microsoft.NET.ILLink.Analyzers.props",
+        "tools/netframework/build/Microsoft.NET.ILLink.Tasks.props",
+        "tools/netframework/build/Microsoft.NET.ILLink.targets",
         "useSharedDesignerContext.txt"
       ]
     },
@@ -200,30 +170,29 @@
   "projectFileDependencyGroups": {
     "net10.0": [
       "Microsoft.AspNetCore.OpenApi >= 10.0.0",
-      "Microsoft.DotNet.ILCompiler >= 10.0.0",
-      "Microsoft.NET.ILLink.Tasks >= 10.0.0"
+      "Microsoft.DotNet.ILCompiler >= 10.0.1",
+      "Microsoft.NET.ILLink.Tasks >= 10.0.1"
     ]
   },
   "packageFolders": {
-    "/home/kaustav/.nuget/packages/": {}
+    "/Users/kaustavhalder/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+      "projectUniqueName": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
       "projectName": "DotnetAotTest",
-      "projectPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
-      "packagesPath": "/home/kaustav/.nuget/packages/",
-      "outputPath": "/media/kaustav/Playground/Personal/Ideas/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/obj/",
+      "projectPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/DotnetAotTest.csproj",
+      "packagesPath": "/Users/kaustavhalder/.nuget/packages/",
+      "outputPath": "/Volumes/KaustavSSD/KausCoder/NodeVsDotnet10-Performance-Test/PerformanceTest/DotnetAot/DotnetAotTest/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/kaustav/.nuget/NuGet/NuGet.Config"
+        "/Users/kaustavhalder/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "/usr/lib/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -255,13 +224,13 @@
           "Microsoft.DotNet.ILCompiler": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.0, )",
+            "version": "[10.0.1, )",
             "autoReferenced": true
           },
           "Microsoft.NET.ILLink.Tasks": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.0, )",
+            "version": "[10.0.1, )",
             "autoReferenced": true
           }
         },
@@ -278,20 +247,8 @@
         "warn": true,
         "downloadDependencies": [
           {
-            "name": "Microsoft.AspNetCore.App.Runtime.linux-x64",
-            "version": "[10.0.0, 10.0.0]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Runtime.linux-x64",
-            "version": "[10.0.0, 10.0.0]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Runtime.NativeAOT.linux-x64",
-            "version": "[10.0.0, 10.0.0]"
-          },
-          {
-            "name": "runtime.linux-x64.Microsoft.DotNet.ILCompiler",
-            "version": "[10.0.0, 10.0.0]"
+            "name": "runtime.osx-arm64.Microsoft.DotNet.ILCompiler",
+            "version": "[10.0.1, 10.0.1]"
           }
         ],
         "frameworkReferences": {
@@ -302,7 +259,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -717,11 +674,6 @@
           "System.Xml.XPath": "(,4.3.32767]",
           "System.Xml.XPath.XDocument": "(,5.0.32767]"
         }
-      }
-    },
-    "runtimes": {
-      "linux-x64": {
-        "#import": []
       }
     }
   }

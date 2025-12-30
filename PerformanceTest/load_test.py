@@ -11,12 +11,12 @@ NODE = "http://localhost:3000"
 DOTNET = "http://localhost:5500"
 GO = "http://localhost:8080"
 DOTNET_AOT = "http://localhost:5600"
+PYTHON = "http://localhost:8000"
 
 
 TEST_DURATION = 30      # seconds per test
 WARMUP_DURATION = 5
 TIMEOUT = aiohttp.ClientTimeout(total=30)
-
 RESULTS = defaultdict(dict)
 
 # ================= UTIL =================
@@ -99,9 +99,17 @@ def fmt(val):
 
 # ================= TEST ROUNDS =================
 
+SUTS = [
+    ("Node.js", NODE),
+    ("Dotnet", DOTNET),
+    ("Go", GO),
+    ("Dotnet AOT", DOTNET_AOT),
+    ("Python", PYTHON)
+]
+
 async def baseline_test():
     print("\n--- ROUND 0: BASELINE (IO, SINGLE USER) ---")
-    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+    for name, base in SUTS:
         url = f"{base}/io"
         await warmup(url)
         lat, err = await run_test("Baseline", name, url, concurrency=1)
@@ -109,7 +117,7 @@ async def baseline_test():
 
 async def io_test():
     print("\n--- ROUND 1: IO-BOUND (ASYNC SCALABILITY) ---")
-    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+    for name, base in SUTS:
         url = f"{base}/io"
         await warmup(url)
         lat, err = await run_test("IO", name, url, concurrency=200)
@@ -117,7 +125,7 @@ async def io_test():
 
 async def cpu_test():
     print("\n--- ROUND 2: CPU-BOUND (PRIME CALCULATION) ---")
-    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+    for name, base in SUTS:
         url = f"{base}/heavy"
         await warmup(url)
         lat, err = await run_test("CPU", name, url, concurrency=4)
@@ -125,7 +133,7 @@ async def cpu_test():
 
 async def sustained_test():
     print("\n--- ROUND 3: SUSTAINED LOAD (TAIL LATENCY) ---")
-    for name, base in [("Node.js", NODE), ("Dotnet", DOTNET), ("Go", GO), ("Dotnet AOT", DOTNET_AOT)]:
+    for name, base in SUTS:
         url = f"{base}/io"
         await warmup(url)
         lat, err = await run_test("Sustained", name, url, concurrency=300)
@@ -134,74 +142,132 @@ async def sustained_test():
 # ================= HTML REPORT =================
 
 def generate_html():
-    def block(test):
-        n = RESULTS[test]["Node.js"]
-        d = RESULTS[test]["Dotnet"]
-        g = RESULTS[test]["Go"]
-        d_aot = RESULTS[test]["Dotnet AOT"]
-        return f"""
+    # Helper to restructure data for charts
+    def get_metric(metric_name):
+        return {test: {runtime: data.get(runtime, {}).get(metric_name) for runtime in [s[0] for s in SUTS]} for test, data in RESULTS.items()}
+    
+    # Generate cards HTML
+    cards_html = ""
+    for test in RESULTS:
+        stats_avg_html = ""
+        stats_err_html = ""
+        for lang, _ in SUTS:
+            stats_avg_html += f"""
+            <div class="stat-item">
+                <span class="stat-label">{lang} Avg</span>
+                <span class="stat-val">{fmt(RESULTS[test][lang]['avg'])}s</span>
+            </div>"""
+            
+            err_count = RESULTS[test][lang]['errors']
+            err_color = '#ef4444' if err_count > 0 else '#4ade80'
+            stats_err_html += f"""
+            <div class="stat-item">
+                <span class="stat-label">{lang} Err</span>
+                <span class="stat-val" style="color: {err_color}">{err_count}</span>
+            </div>"""
+
+        cards_html += f"""
         <div class="card">
             <h2>{test}</h2>
             <canvas id="{test}Chart"></canvas>
-            <div class="stats">
-                Avg: Node {fmt(n['avg'])}s | .NET {fmt(d['avg'])}s | Go {fmt(g['avg'])}s | .NET AOT {fmt(d_aot['avg'])}s<br/>
-                P95: Node {fmt(n['p95'])}s | .NET {fmt(d['p95'])}s | Go {fmt(g['p95'])}s | .NET AOT {fmt(d_aot['p95'])}s<br/>
-                P99: Node {fmt(n['p99'])}s | .NET {fmt(d['p99'])}s | Go {fmt(g['p99'])}s | .NET AOT {fmt(d_aot['p99'])}s<br/>
-                Errors: Node {n['errors']} | .NET {d['errors']} | Go {g['errors']} | .NET AOT {d_aot['errors']}<br/>
-                Samples: Node {n['count']} | .NET {d['count']} | Go {g['count']} | .NET AOT {d_aot['count']}
+            <div class="stats-grid">
+                {stats_avg_html}
+            </div>
+             <div class="stats-grid" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                {stats_err_html}
             </div>
         </div>
         """
 
-    def chart(test):
-        n = RESULTS[test]["Node.js"]["avg"] or 0
-        d = RESULTS[test]["Dotnet"]["avg"] or 0
-        g = RESULTS[test]["Go"]["avg"] or 0
-        d_aot = RESULTS[test]["Dotnet AOT"]["avg"] or 0
-        return f"""
+    # Generate scripts
+    scripts = ""
+    colors = {
+        'Node.js': '#68a063',
+        'Dotnet': '#512bd4',
+        'Go': '#00ADD8',
+        'Dotnet AOT': '#d946ef',
+        'Python': '#FFD43B'
+    }
+    
+    for test in RESULTS:
+        labels = [s[0] for s in SUTS]
+        data_vals = [RESULTS[test][lang]['avg'] for lang in labels]
+        bg_colors = [colors.get(l, '#ccc') for l in labels]
+        
+        scripts += f"""
         new Chart(document.getElementById('{test}Chart'), {{
             type: 'bar',
             data: {{
-                labels: ['Node.js', '.NET', 'Go', '.NET AOT'],
+                labels: {str(labels)},
                 datasets: [{{
-                    label: 'Avg Response (s)',
-                    data: [{n}, {d}, {g}, {d_aot}],
-                    backgroundColor: ['#68a063', '#512bd4', '#00ADD8', '#FF0000']
+                    label: 'Avg Latency (s)',
+                    data: {str(data_vals)},
+                    backgroundColor: {str(bg_colors)},
+                    borderRadius: 6,
+                    borderWidth: 0
                 }}]
             }},
             options: {{
                 responsive: true,
-                plugins: {{ legend: {{ display: false }} }},
-                scales: {{ y: {{ beginAtZero: true }} }}
+                plugins: {{
+                    legend: {{ display: false }},
+                    tooltip: {{
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: {{ size: 14 }},
+                        bodyFont: {{ size: 13 }}
+                    }}
+                }},
+                scales: {{
+                    y: {{
+                        beginAtZero: true,
+                        grid: {{ color: 'rgba(255, 255, 255, 0.1)' }},
+                        ticks: {{ color: '#94a3b8' }}
+                    }},
+                    x: {{
+                        grid: {{ display: false }},
+                        ticks: {{ color: '#94a3b8' }}
+                    }}
+                }}
             }}
         }});
         """
 
     html = f"""
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Node.js vs .NET vs Go – Performance Report</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body {{ font-family: system-ui; background:#f4f6f8; padding:30px }}
-.container {{ max-width:1200px; margin:auto; background:#fff; padding:30px; border-radius:12px }}
-.grid {{ display:grid; grid-template-columns:1fr 1fr; gap:30px }}
-.card {{ padding:20px; border:1px solid #ddd; border-radius:10px }}
-.stats {{ text-align:center; color:#555; margin-top:10px }}
-h1 {{ text-align:center }}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Benchmark Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {{ --primary: #3b82f6; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; }}
+        body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; }}
+        .container {{ max-width: 1200px; margin: auto; }}
+        h1 {{ text-align: center; font-weight: 800; font-size: 2.5rem; margin-bottom: 40px; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; }}
+        .card {{ background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid rgba(255,255,255,0.05); }}
+        h2 {{ margin-top: 0; font-size: 1.5rem; color: var(--primary); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }}
+        .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; font-size: 0.9rem; }}
+        .stat-item {{ background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; text-align: center; }}
+        .stat-label {{ color: var(--text-dim); font-size: 0.75rem; display: block; margin-bottom: 4px; }}
+        .stat-val {{ font-weight: 600; }}
+        canvas {{ max-height: 300px; }}
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>Node.js vs .NET vs Go – Realistic Performance Tests</h1>
-<div class="grid">
-{''.join(block(t) for t in RESULTS)}
-</div>
-</div>
-<script>
-{''.join(chart(t) for t in RESULTS)}
-</script>
+    <div class="container">
+        <h1>🚀 Benchmark Results: Node vs .NET vs Go vs Python</h1>
+        <div class="grid">
+            {cards_html}
+        </div>
+    </div>
+
+    <script>
+        {scripts}
+    </script>
 </body>
 </html>
 """
@@ -234,3 +300,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
